@@ -1,0 +1,30 @@
+{
+  "name": "vms-pro-vercel",
+  "version": "1.0.0",
+  "description": "Visitor Management System - Vercel Ready",
+  "main": "server/index.js",
+  "scripts": {
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm install && npm run build",
+    "build:server": "cd server && npm install",
+    "start": "cd server && npm start",
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm start\"",
+    "vercel-build": "npm run build:client && npm run build:server"
+  },
+  "keywords": [
+    "visitor-management",
+    "vms",
+    "react",
+    "nodejs",
+    "vercel",
+    "demo-mode"
+  ],
+  "author": "VMS Pro Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

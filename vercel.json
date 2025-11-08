@@ -2,15 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "server/index.js",
+      "src": "server/package.json",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["server/**"]
+        "includeFiles": ["server/**", "client/build/**"]
       }
     },
     {
-      "src": "client/build/**",
-      "use": "@vercel/static"
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "client/build"
+      }
     }
   ],
   "routes": [
@@ -27,7 +30,8 @@
     "DEMO_MODE": "true",
     "DEMO_DATABASE": "sqlite",
     "JWT_SECRET": "your-demo-secret-key-change-in-production",
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "PORT": "5000"
   },
   "functions": {
     "server/index.js": {

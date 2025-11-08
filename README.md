@@ -221,6 +221,36 @@ EMAIL_PASS=your-app-password
 
 ## 🚀 Deployment
 
+### 🎯 Vercel Deployment (Recommended - Free & Fast)
+
+#### One-Click Deploy
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-repo/vms-pro&env=DEMO_MODE,DEMO_DATABASE,JWT_SECRET,NODE_ENV,PORT&envDescription=VMS%20Pro%20Environment%20Variables)
+
+#### Manual Deploy
+```bash
+# 1. Build frontend
+cd client && npm run build && cd ..
+
+# 2. Push to GitHub
+git init && git add . && git commit -m "VMS Pro Ready" && git push
+
+# 3. Deploy to Vercel
+# Go to vercel.com, import repo, set env vars, deploy!
+```
+
+**Demo Credentials:**
+- Email: `admin123@vms.com` / Password: `123`
+- Email: `demo@vms.com` / Password: `password`
+
+**Environment Variables:**
+```env
+DEMO_MODE=true
+DEMO_DATABASE=sqlite
+JWT_SECRET=your-secure-secret-key
+NODE_ENV=production
+PORT=5000
+```
+
 ### Production Build
 ```bash
 # Build frontend
