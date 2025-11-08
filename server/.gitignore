@@ -1,0 +1,60 @@
+# Dependency artifacts
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build output
+build/
+client/build/
+server/build/
+dist/
+client/dist/
+server/dist/
+temp/
+*.tmp
+
+# Production and env files
+.env
+server/.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS and Editor files
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Miscellaneous
+*.tgz
+*.bak
+*.old
+
+# Docker
+*.pid
+*.seed
+docker-compose.override.yml
+.dockerignore
+
+
+# Exclude package lock if using yarn, otherwise include
+yarn.lock
+
+# Ignore coverage reports
+coverage/
+*.lcov
+
+# Ignore by convention
+client/public/static/
+server/scripts/*.log
