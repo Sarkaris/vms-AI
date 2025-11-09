@@ -7,14 +7,7 @@ import {
   Download, 
   Eye, 
   LogOut, 
-  Clock,
-  MapPin,
-  Phone,
-  Mail,
-  Building,
   User,
-  AlertTriangle,
-  CheckCircle,
   XCircle
 } from 'lucide-react';
 import { format, isSameDay, parse } from 'date-fns';

@@ -7,7 +7,6 @@ import {
   Bell, 
   Shield, 
   Database, 
-  Globe,
   Save,
   Eye,
   EyeOff,
@@ -185,28 +184,29 @@ const Settings = () => {
     }
   };
 
-  const downloadBackup = async (backupId) => {
-    try {
-      const response = await fetch(`/api/backup/${backupId}/download`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `vms-backup-${new Date().toISOString().split('T')[0]}.zip`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast.success('Backup downloaded successfully!');
-      } else {
-        throw new Error('Download failed');
-      }
-    } catch (error) {
-      console.error('Error downloading backup:', error);
-      toast.error('Failed to download backup');
-    }
-  };
+  // downloadBackup function - reserved for future use
+  // const downloadBackup = async (backupId) => {
+  //   try {
+  //     const response = await fetch(`/api/backup/${backupId}/download`);
+  //     if (response.ok) {
+  //       const blob = await response.blob();
+  //       const url = URL.createObjectURL(blob);
+  //       const link = document.createElement('a');
+  //       link.href = url;
+  //       link.download = `vms-backup-${new Date().toISOString().split('T')[0]}.zip`;
+  //       document.body.appendChild(link);
+  //       link.click();
+  //       document.body.removeChild(link);
+  //       URL.revokeObjectURL(url);
+  //       toast.success('Backup downloaded successfully!');
+  //     } else {
+  //       throw new Error('Download failed');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error downloading backup:', error);
+  //     toast.error('Failed to download backup');
+  //   }
+  // };
 
   const restoreBackup = async (file) => {
     try {
