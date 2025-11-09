@@ -15,6 +15,8 @@ import { useI18n } from '../contexts/I18nContext';
 import { useZxing } from 'react-zxing';
 import Webcam from 'react-webcam';
 import toast from 'react-hot-toast';
+import { mockApi } from '../utils/mockData';
+import { showDemoToast } from '../components/UI/DemoPopup';
 
 const CheckIn = () => {
   const { emitVisitorCheckin } = useSocket();
@@ -60,9 +62,9 @@ const CheckIn = () => {
   const [lastAutoSearched, setLastAutoSearched] = useState('');
   // Prefill from navigation state (Visit Again)
   useEffect(() => {
-    const state = location.state || {};
-    if (state.prefillVisitor) {
-      const data = state.prefillVisitor;
+    const locationState = location.state || {};
+    if (locationState.prefillVisitor) {
+      const data = locationState.prefillVisitor;
       const normalizedPurpose = (
         [
           'Anti-Human Trafficking Unit','Antiterrorism Squad','Application Branch','Control Room','Cyber Police Station','District Special Branch','Economic Offences Wing','Local Crime Branch','Mahila Cell','Security Branch','Welfare Branch','Superintendent of Police (SP)','Additional Superintendent of Police (Additional SP)'
@@ -90,8 +92,74 @@ const CheckIn = () => {
     }
   // We intentionally run this once on mount to capture the state payload
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+}, []);
 
+const handleSearch = useCallback(async (identifier) => {
+  if (!identifier) {
+    toast.error('Please enter an ID to search.');
+    return;
+  }
+  setIsSearching(true);
+  setVisitorFound(null);
+  try {
+    // Try server first, fallback to mock
+    const { mockApi } = await import('../utils/mockData');
+    const data = await mockApi.findVisitor(identifier);
+
+    if (data) {
+      if (data.status === 'Checked In') {
+        toast.error(`${data.firstName} is already checked in.`);
+        setVisitorFound(null);
+        return;
+      }
+
+      toast.success(`Welcome back, ${data.firstName}! Please fill out your new visit details.`);
+      
+      // Manually build the form data for the new visit, only taking permanent details
+      // from the old record ('data').
+      // Map legacy purpose to a valid department if needed
+      const normalizedPurpose = (
+        [
+          'Anti-Human Trafficking Unit','Antiterrorism Squad','Application Branch','Control Room','Cyber Police Station','District Special Branch','Economic Offences Wing','Local Crime Branch','Mahila Cell','Security Branch','Welfare Branch','Superintendent of Police (SP)','Additional Superintendent of Police (Additional SP)'
+        ].includes((data.purpose || '').trim())
+      ) ? data.purpose : 'Anti-Human Trafficking Unit';
+
+      setFormData({
+        ...initialFormData,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        photo: data.photo,
+        purpose: normalizedPurpose,
+        aadhaarId: data.aadhaarId || '',
+        panId: data.panId || '',
+        passportId: data.passportId || '',
+        drivingLicenseId: data.drivingLicenseId || '',
+        isVip: data.isVip,
+        securityLevel: data.securityLevel,
+        qrCode: data.qrCode || identifier,
+      });
+      
+      setVisitorFound(true);
+
+    } else {
+      toast.error('Visitor not found. Please fill form to register.');
+      setFormData({ 
+        ...initialFormData, 
+        qrCode: identifier,
+      });
+      setVisitorFound(false);
+    }
+  } catch (error) {
+    toast.error('An error occurred while searching.');
+    setVisitorFound(false);
+  } finally {
+    setIsSearching(false);
+    setSearchId('');
+  }
+}, [initialFormData]);
   // Regex patterns for validation
   const phoneRegex = /^[6-9]\d{9}$/;
 
@@ -99,6 +167,8 @@ const CheckIn = () => {
   useEffect(() => {
     if (!searchId || isSearching) return;
     const raw = (searchId || '').toString().trim();
+    const panRegex = /^[A-Z]{5}\d{4}[A-Z]$/;
+    const passportRegex = /^[A-Z][0-9]{7}$/;
     const aadhaarLike = /^\d{12}$/.test(raw);
     const phoneLike = phoneRegex.test(raw);
     const panLike = panRegex.test(raw.toUpperCase());
@@ -110,8 +180,7 @@ const CheckIn = () => {
       handleSearch(raw);
     }, 500);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchId, isSearching]);
+  }, [searchId, isSearching, phoneRegex, handleSearch, lastAutoSearched]);
 
   // Updated lists per requirements - Police Departments in alphabetical order
   const purposes = [
@@ -129,75 +198,8 @@ const CheckIn = () => {
     'Superintendent of Police (SP)',
     'Additional Superintendent of Police (Additional SP)'
   ];
-  // const securityLevels = ['Low', 'Medium', 'High']; // Reserved for future use
+  // const securityLevels = ['Low', 'Medium', 'High']; // Unused
 
-  const handleSearch = useCallback(async (identifier) => {
-    if (!identifier) {
-      toast.error('Please enter an ID to search.');
-      return;
-    }
-    setIsSearching(true);
-    setVisitorFound(null);
-    try {
-      const response = await fetch(`/api/visitors/find?id=${encodeURIComponent(identifier)}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.status === 'Checked In') {
-          toast.error(`${data.firstName} is already checked in.`);
-          setVisitorFound(null);
-          return;
-        }
-
-        toast.success(`Welcome back, ${data.firstName}! Please fill out your new visit details.`);
-        
-        // --- THIS IS THE KEY FIX ---
-        // Manually build the form data for the new visit, only taking permanent details
-        // from the old record ('data').
-        // Map legacy purpose to a valid department if needed
-        const normalizedPurpose = (
-          [
-            'Anti-Human Trafficking Unit','Antiterrorism Squad','Application Branch','Control Room','Cyber Police Station','District Special Branch','Economic Offences Wing','Local Crime Branch','Mahila Cell','Security Branch','Welfare Branch','Superintendent of Police (SP)','Additional Superintendent of Police (Additional SP)'
-          ].includes((data.purpose || '').trim())
-        ) ? data.purpose : 'Anti-Human Trafficking Unit';
-
-        setFormData({
-          ...initialFormData,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          company: data.company,
-          photo: data.photo,
-          purpose: normalizedPurpose,
-          aadhaarId: data.aadhaarId || '',
-          panId: data.panId || '',
-          passportId: data.passportId || '',
-          drivingLicenseId: data.drivingLicenseId || '',
-          isVip: data.isVip,
-          securityLevel: data.securityLevel,
-          qrCode: data.qrCode || identifier,
-        });
-        
-        setVisitorFound(true);
-
-      } else {
-        toast.error('Visitor not found. Please fill form to register.');
-        setFormData({ 
-          ...initialFormData, 
-          qrCode: identifier,
-        });
-        setVisitorFound(false);
-      }
-    } catch (error) {
-      toast.error('An error occurred while searching.');
-      setVisitorFound(false);
-    } finally {
-      setIsSearching(false);
-      setSearchId('');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleScanResult = useCallback((result) => {
     if (result) {
@@ -207,7 +209,6 @@ const CheckIn = () => {
       toast.success('QR Code Scanned!');
       handleSearch(scannedId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleSearch]);
 
   const { ref } = useZxing({
@@ -226,7 +227,7 @@ const CheckIn = () => {
   const validateField = (name, rawValue, nextState) => {
     let message = '';
     const value = (rawValue || '').toString().trim();
-    // const state = nextState || formData; // Reserved for future use
+    const state = nextState || formData;
 
     if (name === 'firstName' || name === 'lastName') {
       if (!nameRegex.test(value)) message = "Only letters, spaces, .' - (2-50 chars)";
@@ -295,11 +296,10 @@ const CheckIn = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    showDemoToast('create');
     setLoading(true);
 
     const isUpdate = !!formData._id;
-    const url = isUpdate ? `/api/visitors/${formData._id}` : '/api/visitors';
-    const method = isUpdate ? 'PUT' : 'POST';
 
     try {
       const visitorData = { ...formData, photo: capturedImage };
@@ -310,26 +310,15 @@ const CheckIn = () => {
         visitorData.status = 'Checked In'; 
       }
 
-      const response = await fetch(url, {
-        method: method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(visitorData),
-      });
-
       let result;
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        result = await response.json();
+      if (isUpdate) {
+        result = await mockApi.updateVisitor(formData._id, visitorData);
       } else {
-        const text = await response.text();
-        try { result = JSON.parse(text); }
-        catch { result = { message: text }; }
+        result = await mockApi.createVisitor(visitorData);
+        emitVisitorCheckin(result);
       }
 
-      if (response.ok) {
-        if (!isUpdate) {
-            emitVisitorCheckin(result);
-        }
+      if (result) {
         toast.success(`Visitor ${isUpdate ? 'details updated' : 'checked in'} successfully!`);
         resetForm();
       } else {

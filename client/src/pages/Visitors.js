@@ -13,6 +13,8 @@ import {
 import { format, isSameDay, parse } from 'date-fns';
 import toast from 'react-hot-toast';
 import { exportVisitorsToExcel, exportToCSV } from '../utils/exportUtils';
+import { mockApi } from '../utils/mockData';
+import { showDemoToast } from '../components/UI/DemoPopup';
 
 const Visitors = () => {
   const [visitors, setVisitors] = useState([]);
@@ -38,35 +40,31 @@ const Visitors = () => {
 
   const fetchVisitors = async () => {
     try {
-      const response = await fetch('/api/visitors');
-      const data = await response.json();
-      // console.log('Fetched visitors:', data);
+      const data = await mockApi.getVisitors();
       setVisitors(data.visitors || []);
     } catch (error) {
       console.error('Error fetching visitors:', error);
+      setVisitors([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCheckout = async (visitorId) => {
+    showDemoToast('checkout');
     try {
       setIsCheckingOut(true);
-      const response = await fetch(`/api/visitors/${visitorId}/checkout`, {
-        method: 'PUT',
-      });
+      await mockApi.checkoutVisitor(visitorId);
       
-      if (response.ok) {
-        // Optimistically update UI without waiting for fresh fetch
-        setVisitors((prev) => prev.map(v => v._id === visitorId ? { ...v, status: 'Checked Out', checkOutTime: new Date().toISOString() } : v));
-        setSelectedVisitor((prev) => prev ? { ...prev, status: 'Checked Out', checkOutTime: new Date().toISOString() } : prev);
-        setShowModal(false);
-        // Refresh in background
-        fetchVisitors();
-        toast.success('Visitor checked out successfully');
-        setShowCheckoutSuccess(true);
-        setTimeout(() => setShowCheckoutSuccess(false), 2500);
-      }
+      // Optimistically update UI without waiting for fresh fetch
+      setVisitors((prev) => prev.map(v => v._id === visitorId ? { ...v, status: 'Checked Out', checkOutTime: new Date().toISOString() } : v));
+      setSelectedVisitor((prev) => prev ? { ...prev, status: 'Checked Out', checkOutTime: new Date().toISOString() } : prev);
+      setShowModal(false);
+      // Refresh in background
+      fetchVisitors();
+      toast.success('Visitor checked out successfully (Demo)');
+      setShowCheckoutSuccess(true);
+      setTimeout(() => setShowCheckoutSuccess(false), 2500);
     } catch (error) {
       console.error('Error checking out visitor:', error);
       toast.error('Failed to check out visitor');
@@ -103,21 +101,18 @@ const Visitors = () => {
 
   const saveEdit = async () => {
     if (!editData?._id) return;
+    showDemoToast('update');
     setIsSavingEdit(true);
     try {
-      const res = await fetch(`/api/visitors/${editData._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editData)
-      });
-      if (res.ok) {
-        await fetchVisitors();
-        setEditData(null);
-        setSelectedVisitor(null);
-        setShowModal(false);
-      }
+      await mockApi.updateVisitor(editData._id, editData);
+      await fetchVisitors();
+      setEditData(null);
+      setSelectedVisitor(null);
+      setShowModal(false);
+      toast.success('Visitor updated successfully (Demo)');
     } catch (e) {
       console.error('Error saving edit:', e);
+      toast.error('Failed to update visitor');
     } finally {
       setIsSavingEdit(false);
     }
@@ -502,9 +497,8 @@ const Visitors = () => {
                           setShowModal(true);
                           setLoadingHistory(true);
                           try {
-                            const res = await fetch(`/api/visitors/${visitor._id}/history`);
-                            const data = await res.json();
-                            setHistory(Array.isArray(data) ? data : []);
+                            const data = await mockApi.getVisitorHistory(visitor._id);
+                            setHistory(Array.isArray(data.history) ? data.history : []);
                           } catch (e) { setHistory([]); }
                           finally { setLoadingHistory(false); }
                         }}

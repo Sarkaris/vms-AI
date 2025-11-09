@@ -9,7 +9,6 @@ import { SocketProvider } from './contexts/SocketContext';
 import Navbar from './components/Layout/Navbar';
 import Sidebar from './components/Layout/Sidebar';
 import LoadingSpinner from './components/UI/LoadingSpinner';
-import DemoBanner from './components/DemoBanner';
 
 // Pages
 import Login from './pages/Login';
@@ -72,7 +71,6 @@ function App() {
         <SocketProvider>
           <Router>
             <div className="App bg-gray-50 dark:bg-gray-900 min-h-screen">
-              <DemoBanner />
               <Toaster
                 position="top-right"
                 toastOptions={{

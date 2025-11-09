@@ -149,34 +149,21 @@ const Settings = () => {
   };
 
   const createBackup = async () => {
+    const { showDemoToast } = await import('../components/UI/DemoPopup');
+    showDemoToast('backup');
     try {
       setBackupStatus(prev => ({ ...prev, isBackingUp: true }));
       
-      // Simulate backup creation
-      const response = await fetch('/api/backup/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          includePhotos: backupSettings.includePhotos,
-          includeReports: backupSettings.includeReports,
-          description: `Manual backup created on ${new Date().toLocaleString()}`
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setBackupStatus(prev => ({
-          ...prev,
-          lastBackup: new Date().toISOString(),
-          backupSize: result.size || '2.5 MB',
-          isBackingUp: false
-        }));
-        toast.success('Backup created successfully!');
-      } else {
-        throw new Error('Backup creation failed');
-      }
+      // Simulate backup creation in demo mode
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setBackupStatus(prev => ({
+        ...prev,
+        lastBackup: new Date().toISOString(),
+        backupSize: '2.5 MB',
+        isBackingUp: false
+      }));
+      toast.success('Backup created successfully (Demo)!');
     } catch (error) {
       console.error('Error creating backup:', error);
       setBackupStatus(prev => ({ ...prev, isBackingUp: false }));
@@ -184,51 +171,16 @@ const Settings = () => {
     }
   };
 
-  // downloadBackup function - reserved for future use
-  // const downloadBackup = async (backupId) => {
-  //   try {
-  //     const response = await fetch(`/api/backup/${backupId}/download`);
-  //     if (response.ok) {
-  //       const blob = await response.blob();
-  //       const url = URL.createObjectURL(blob);
-  //       const link = document.createElement('a');
-  //       link.href = url;
-  //       link.download = `vms-backup-${new Date().toISOString().split('T')[0]}.zip`;
-  //       document.body.appendChild(link);
-  //       link.click();
-  //       document.body.removeChild(link);
-  //       URL.revokeObjectURL(url);
-  //       toast.success('Backup downloaded successfully!');
-  //     } else {
-  //       throw new Error('Download failed');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error downloading backup:', error);
-  //     toast.error('Failed to download backup');
-  //   }
-  // };
+  const downloadBackup = async (backupId) => {
+    const { showDemoToast } = await import('../components/UI/DemoPopup');
+    showDemoToast('backup');
+    toast.error('Backup download is disabled in demo mode');
+  };
 
   const restoreBackup = async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append('backup', file);
-      
-      const response = await fetch('/api/backup/restore', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        toast.success('Backup restored successfully!');
-        // Refresh the page or redirect
-        window.location.reload();
-      } else {
-        throw new Error('Restore failed');
-      }
-    } catch (error) {
-      console.error('Error restoring backup:', error);
-      toast.error('Failed to restore backup');
-    }
+    const { showDemoToast } = await import('../components/UI/DemoPopup');
+    showDemoToast('backup');
+    toast.error('Backup restore is disabled in demo mode');
   };
 
   return (

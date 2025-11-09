@@ -3,8 +3,11 @@ import { useSocket } from '../contexts/SocketContext';
 import {
   Users,
   UserPlus,
+  Clock,
   AlertTriangle,
+  TrendingUp,
   Calendar,
+  MapPin,
   Activity,
   Eye,
   EyeOff,
@@ -12,11 +15,15 @@ import {
   Download
 } from 'lucide-react';
 import { 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
+  BarChart as RechartsBarChart, 
+  Bar, 
   PieChart as RechartsPieChart, 
   Pie, 
   Cell,
@@ -50,37 +57,25 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Always fetch live data for Security role, otherwise respect useDemo setting
-    if (user?.role === 'Security' || !useDemo) {
-      fetchDashboardData();
+    // In demo mode, always use demo data
+    if (useDemo) {
+      setLoading(false);
+      return;
     }
-
-    // Listen for real-time updates
-    if (socket) {
-      socket.on('visitor-update', (data) => {
-        fetchDashboardData(); // Refresh data on updates
-      });
-    }
-
-    return () => {
-      if (socket) {
-        socket.off('visitor-update');
-      }
-    };
-  }, [socket, useDemo, user?.role]);
+    
+    // Fetch data
+    fetchDashboardData();
+  }, [useDemo]);
 
   const fetchDashboardData = async () => {
     try {
-      const [dashboardRes, trafficRes, sidebarRes, emergenciesRes] = await Promise.all([
-        fetch('/api/analytics/dashboard'),
-        fetch('/api/analytics/traffic?period=7d'),
-        fetch('/api/analytics/sidebar'),
-        fetch('/api/emergencies')
+      const { mockApi } = await import('../utils/mockData');
+      const [dashboardJson, trafficJson, sidebarJson, emergenciesJson] = await Promise.all([
+        mockApi.getDashboard(),
+        mockApi.getTraffic('7d'),
+        mockApi.getSidebar(),
+        mockApi.getEmergencies()
       ]);
-      const dashboardJson = await dashboardRes.json();
-      const trafficJson = await trafficRes.json();
-      const sidebarJson = await sidebarRes.json();
-      const emergenciesJson = await emergenciesRes.json();
       
       // Format department data for chart
       const formattedDeptData = (trafficJson.departmentData || []).map(item => ({

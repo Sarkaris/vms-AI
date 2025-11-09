@@ -42,16 +42,11 @@ const Emergency = () => {
   const fetchEmergencies = async () => {
     try {
       setLoading(true);
-      let url = '/api/emergencies?';
-      if (filters.status) url += `status=${filters.status}&`;
-      if (filters.type) url += `type=${filters.type}&`;
-      if (filters.search) url += `q=${filters.search}&`;
+      const { mockApi } = await import('../utils/mockData');
       
-      const response = await fetch(url);
-      const data = await response.json();
+      const data = await mockApi.getEmergencies(filters);
       
       if (data.emergencies) {
-        // console.log(data)
         setEmergencies(data.emergencies);
         
         // Calculate stats
@@ -128,17 +123,13 @@ const Emergency = () => {
 
   // Handle emergency actions
   const resolveEmergency = async (id) => {
+    const { showDemoToast } = await import('../components/UI/DemoPopup');
+    showDemoToast('emergency');
     try {
-      const response = await fetch(`/api/emergencies/${id}/resolve`, {
-        method: 'PUT'
-      });
-      
-      if (response.ok) {
-        toast.success('Emergency resolved successfully');
-        fetchEmergencies();
-      } else {
-        toast.error('Failed to resolve emergency');
-      }
+      const { mockApi } = await import('../utils/mockData');
+      await mockApi.resolveEmergency(id);
+      toast.success('Emergency resolved successfully (Demo)');
+      fetchEmergencies();
     } catch (error) {
       console.error('Error resolving emergency:', error);
       toast.error('Failed to resolve emergency');
@@ -146,17 +137,13 @@ const Emergency = () => {
   };
 
   const cancelEmergency = async (id) => {
+    const { showDemoToast } = await import('../components/UI/DemoPopup');
+    showDemoToast('emergency');
     try {
-      const response = await fetch(`/api/emergencies/${id}/cancel`, {
-        method: 'PUT'
-      });
-      
-      if (response.ok) {
-        toast.success('Emergency cancelled successfully');
-        fetchEmergencies();
-      } else {
-        toast.error('Failed to cancel emergency');
-      }
+      const { mockApi } = await import('../utils/mockData');
+      await mockApi.cancelEmergency(id);
+      toast.success('Emergency cancelled successfully (Demo)');
+      fetchEmergencies();
     } catch (error) {
       console.error('Error cancelling emergency:', error);
       toast.error('Failed to cancel emergency');
@@ -175,7 +162,7 @@ const Emergency = () => {
     { name: 'Visitor', value: stats.visitor, color: '#8B5CF6' }
   ];
 
-  // const COLORS = ['#EF4444', '#10B981', '#6B7280', '#3B82F6', '#8B5CF6']; // Reserved for future use
+  // const COLORS = ['#EF4444', '#10B981', '#6B7280', '#3B82F6', '#8B5CF6']; // Unused
 
   return (
     <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 lg:p-6">
@@ -323,7 +310,7 @@ const Emergency = () => {
                       ${emergency._id === selectedEmergencyId ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}
                   >
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      {emergency.incidentCode}
+                      {emergency.incidentCode || emergency.code || emergency._id?.substring(0, 8) || 'N/A'}
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -337,15 +324,15 @@ const Emergency = () => {
                         {emergency.formattedDescription || (
                           emergency.type === 'Departmental' ? (
                             <div>
-                              <div>🏢 <span className="font-medium">Dept:</span> {emergency.departmentName}</div>
-                              <div>👨‍💼 <span className="font-medium">POC:</span> {emergency.pocName}</div>
-                              <div>👥 <span className="font-medium">Headcount:</span> {emergency.headcount}</div>
+                              <div>🏢 <span className="font-medium">Dept:</span> {emergency.departmentName || 'Not provided'}</div>
+                              <div>👨‍💼 <span className="font-medium">POC:</span> {emergency.pocName || 'Not provided'}</div>
+                              <div>👥 <span className="font-medium">Headcount:</span> {emergency.headcount || 0}</div>
                               <div>📍 <span className="font-medium">Location:</span> {emergency.location || 'Not specified'}</div>
                             </div>
                           ) : (
                             <div>
-                              <div>👤 <span className="font-medium">Name:</span> {emergency.visitorFirstName} {emergency.visitorLastName}</div>
-                              <div>📞 <span className="font-medium">Phone:</span> {emergency.visitorPhone}</div>
+                              <div>👤 <span className="font-medium">Name:</span> {((emergency.visitorFirstName || '') + ' ' + (emergency.visitorLastName || '')).trim() || 'Not provided'}</div>
+                              <div>📞 <span className="font-medium">Phone:</span> {emergency.visitorPhone || 'Not provided'}</div>
                               {emergency.reason && <div>📝 <span className="font-medium">Reason:</span> {emergency.reason}</div>}
                               <div>📍 <span className="font-medium">Location:</span> {emergency.location || 'Not specified'}</div>
                             </div>
@@ -363,8 +350,36 @@ const Emergency = () => {
                       </span>
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      <div>{new Date(emergency.createdAt).toLocaleString()}</div>
-                      <div className="text-xs">{emergency.duration} ago</div>
+                      {(() => {
+                        const dateStr = emergency.reportedAt || emergency.createdAt || emergency.updatedAt;
+                        if (!dateStr) return <div className="text-gray-400">No date</div>;
+                        
+                        try {
+                          const date = new Date(dateStr);
+                          if (isNaN(date.getTime())) return <div className="text-gray-400">Invalid Date</div>;
+                          
+                          const now = new Date();
+                          const diffMs = now - date;
+                          const diffMins = Math.floor(diffMs / 60000);
+                          const diffHours = Math.floor(diffMs / 3600000);
+                          const diffDays = Math.floor(diffMs / 86400000);
+                          
+                          let timeAgo = '';
+                          if (diffMins < 1) timeAgo = 'Just now';
+                          else if (diffMins < 60) timeAgo = `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
+                          else if (diffHours < 24) timeAgo = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+                          else timeAgo = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+                          
+                          return (
+                            <>
+                              <div>{date.toLocaleString()}</div>
+                              <div className="text-xs text-gray-400">{timeAgo}</div>
+                            </>
+                          );
+                        } catch (e) {
+                          return <div className="text-gray-400">Invalid Date</div>;
+                        }
+                      })()}
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                       {emergency.status === 'Active' && (

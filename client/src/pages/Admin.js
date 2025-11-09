@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
 import toast from 'react-hot-toast';
+import { mockApi } from '../utils/mockData';
+import { showDemoToast } from '../components/UI/DemoPopup';
 import { 
   Users, 
   Shield, 
@@ -55,11 +56,11 @@ const Admin = () => {
 const fetchAdmins = async () => {
   setLoading(true);
   try {
-    const { data } = await axios.get('/api/admin');
+    const data = await mockApi.getAdmins();
     setAdmins(Array.isArray(data) ? data : []);
   } catch (error) {
     console.error('Error fetching admins:', error);
-    toast.error(error.response?.data?.message || 'Failed to load admins');
+    toast.error('Failed to load admins');
     setAdmins([]);
   } finally {
     setLoading(false);
@@ -68,20 +69,14 @@ const fetchAdmins = async () => {
 // ...
   const handleSubmit = async (e) => {
     e.preventDefault();
+    showDemoToast('admin');
     try {
-      const isUserTier = ['Security', 'Receptionist'].includes(formData.role);
-      const url = editingAdmin
-        ? `/api/admin/${editingAdmin._id}`
-        : isUserTier
-          ? '/api/admin/users'
-          : '/api/admin';
-
       if (editingAdmin) {
-        await axios.put(url, formData);
-        toast.success('Admin updated');
+        await mockApi.updateAdmin(editingAdmin._id, formData);
+        toast.success('Admin updated (Demo)');
       } else {
-        await axios.post(url, formData);
-        toast.success('Account created');
+        await mockApi.createAdmin(formData);
+        toast.success('Account created (Demo)');
       }
 
       await fetchAdmins();
@@ -90,39 +85,40 @@ const fetchAdmins = async () => {
       resetForm();
     } catch (error) {
       console.error('Error saving admin:', error);
-      const message = error.response?.data?.message || 'Failed to save';
-      toast.error(message);
+      toast.error('Failed to save');
     }
   };
 
-  // Reserved for future use
-  // const handleEdit = (admin) => {
-  //   setEditingAdmin(admin);
-  //   setFormData({
-  //     username: admin.username,
-  //     email: admin.email,
-  //     password: '',
-  //     firstName: admin.firstName,
-  //     lastName: admin.lastName,
-  //     role: admin.role,
-  //     department: admin.department,
-  //     permissions: admin.permissions
-  //   });
-  //   setShowModal(true);
-  // };
+  // eslint-disable-next-line no-unused-vars
+  const handleEdit = (admin) => {
+    setEditingAdmin(admin);
+    setFormData({
+      username: admin.username,
+      email: admin.email,
+      password: '',
+      firstName: admin.firstName,
+      lastName: admin.lastName,
+      role: admin.role,
+      department: admin.department,
+      permissions: admin.permissions
+    });
+    setShowModal(true);
+  };
 
-  // const handleDelete = async (adminId) => {
-  //   if (window.confirm('Are you sure you want to deactivate this admin?')) {
-  //     try {
-  //       await axios.put(`/api/admin/${adminId}/deactivate`);
-  //       toast.success('Admin deactivated');
-  //       await fetchAdmins();
-  //     } catch (error) {
-  //       console.error('Error deactivating admin:', error);
-  //       toast.error(error.response?.data?.message || 'Failed to deactivate');
-  //     }
-  //   }
-  // };
+  // eslint-disable-next-line no-unused-vars
+  const handleDelete = async (adminId) => {
+    if (window.confirm('Are you sure you want to deactivate this admin?')) {
+      showDemoToast('delete');
+      try {
+        await mockApi.deactivateAdmin(adminId);
+        toast.success('Admin deactivated (Demo)');
+        await fetchAdmins();
+      } catch (error) {
+        console.error('Error deactivating admin:', error);
+        toast.error('Failed to deactivate');
+      }
+    }
+  };
 
   const resetForm = () => {
     setFormData({

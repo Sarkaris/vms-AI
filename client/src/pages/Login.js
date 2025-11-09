@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-// import { useI18n } from '../contexts/I18nContext'; // Reserved for future use
+import { useI18n } from '../contexts/I18nContext';
 import { Eye, EyeOff, Shield, Users, BarChart, Clock } from 'lucide-react';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
 import { useNavigate } from "react-router-dom";
@@ -110,7 +110,7 @@ const handleSubmit = async (e) => {
 
             <div className="mt-8 xl:mt-12 p-4 xl:p-6 bg-white bg-opacity-10 rounded-xl backdrop-blur-sm">
               <h3 className="font-semibold text-base xl:text-lg mb-2">Demo Credentials</h3>
-              <p className="text-blue-100 text-sm mb-2">Email: admin123@vms.com</p>
+              <p className="text-blue-100 text-sm mb-2">Email: admin@vms.com</p>
               <p className="text-blue-100 text-sm">Password: 123</p>
             </div>
           </div>
@@ -188,9 +188,9 @@ const handleSubmit = async (e) => {
                   />
                   <span className="ml-2 text-sm text-gray-600">Remember me</span>
                 </label>
-                <button type="button" className="text-sm text-blue-600 hover:text-blue-500">
+                <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
                   Forgot password?
-                </button>
+                </a>
               </div>
 
               <button
@@ -211,9 +211,9 @@ const handleSubmit = async (e) => {
             <div className="mt-6 sm:mt-8 text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}
-                <button type="button" className="text-blue-600 hover:text-blue-500 font-medium">
+                <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
                   Contact Administrator
-                </button>
+                </a>
               </p>
             </div>
 
@@ -221,7 +221,7 @@ const handleSubmit = async (e) => {
             <div className="lg:hidden mt-6 sm:mt-8 p-3 sm:p-4 bg-gray-50 rounded-lg">
               <h3 className="font-semibold text-sm text-gray-700 mb-2">Demo Credentials</h3>
               <p className="text-xs text-gray-600 mb-1">Email: admin@vms.com</p>
-              <p className="text-xs text-gray-600">Password: admin123</p>
+              <p className="text-xs text-gray-600">Password: 123</p>
             </div>
           </div>
         </div>

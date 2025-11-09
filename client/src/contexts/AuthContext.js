@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
+import { mockApi } from '../utils/mockData';
 
 const AuthContext = createContext();
 
@@ -16,25 +16,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Set up axios defaults
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-  }, []);
-
   // Check if user is logged in on app start
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await axios.get('/api/auth/profile');
-          setUser(response.data);
+          const profile = await mockApi.getProfile();
+          setUser(profile);
         } catch (error) {
           localStorage.removeItem('token');
-          delete axios.defaults.headers.common['Authorization'];
         }
       }
       setLoading(false);
@@ -45,79 +36,45 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/api/auth/login', { email, password });
-      const { token, admin } = response.data;
-      
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(admin);
-      
-      toast.success(`Welcome back, ${admin.firstName}!`);
-      return { success: true };
+      // Hardcoded login credentials
+      if (email === 'admin@vms.com' && password === '123') {
+        const { token, admin } = await mockApi.login(email, password);
+        
+        localStorage.setItem('token', token);
+        setUser(admin);
+        
+        toast.success(`Welcome back, ${admin.firstName}!`);
+        return { success: true };
+      } else {
+        toast.error('Invalid credentials. Use email: admin@vms.com, password: 123');
+        return { success: false, message: 'Invalid credentials' };
+      }
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
+      const message = error.message || 'Login failed';
       toast.error(message);
       return { success: false, message };
     }
   };
 
   const register = async (userData) => {
-    try {
-      const response = await axios.post('/api/auth/register', userData);
-      const { token, admin } = response.data;
-      
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(admin);
-      
-      toast.success(`Welcome, ${admin.firstName}!`);
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed';
-      toast.error(message);
-      return { success: false, message };
-    }
+    toast.error('Registration is disabled in demo mode');
+    return { success: false, message: 'Registration disabled in demo' };
   };
 
   const logout = async () => {
-    try {
-      await axios.post('/api/auth/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('token');
-      delete axios.defaults.headers.common['Authorization'];
-      setUser(null);
-      toast.success('Logged out successfully');
-    }
+    localStorage.removeItem('token');
+    setUser(null);
+    toast.success('Logged out successfully');
   };
 
   const updateProfile = async (profileData) => {
-    try {
-      const response = await axios.put('/api/auth/profile', profileData);
-      setUser(response.data);
-      toast.success('Profile updated successfully');
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Profile update failed';
-      toast.error(message);
-      return { success: false, message };
-    }
+    toast.error('Profile updates are disabled in demo mode');
+    return { success: false, message: 'Profile updates disabled in demo' };
   };
 
   const changePassword = async (currentPassword, newPassword) => {
-    try {
-      await axios.put('/api/auth/change-password', {
-        currentPassword,
-        newPassword
-      });
-      toast.success('Password changed successfully');
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Password change failed';
-      toast.error(message);
-      return { success: false, message };
-    }
+    toast.error('Password changes are disabled in demo mode');
+    return { success: false, message: 'Password changes disabled in demo' };
   };
 
   const value = {

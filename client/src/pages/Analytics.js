@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Calendar,
   Download,
+  Filter,
   TrendingUp,
   TrendingDown,
   Users,
   Clock,
+  MapPin,
   BarChart,
+  PieChart,
   Activity,
   AlertTriangle,
   Shield,
@@ -15,7 +19,7 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-// import { exportAnalyticsToExcel } from '../utils/exportUtils'; // Reserved for future use
+import { exportAnalyticsToExcel } from '../utils/exportUtils';
 
 import {
   LineChart,
@@ -25,6 +29,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  BarChart as RechartsBarChart,
+  Bar,
   PieChart as RechartsPieChart,
   Pie,
   Cell,
@@ -252,7 +258,6 @@ const Analytics = () => {
     if (!showStaticData) {
       fetchAnalyticsData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod, selectedDateRange, showStaticData]);
 
   // Sync analysis type with server period when on live data
@@ -267,25 +272,22 @@ const Analytics = () => {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
+      const { mockApi } = await import('../utils/mockData');
 
       // Fetch traffic analytics
-      const trafficResponse = await fetch(`/api/analytics/traffic?period=${selectedPeriod}&startDate=${selectedDateRange.startDate}&endDate=${selectedDateRange.endDate}`);
-      const trafficData = await trafficResponse.json();
+      const trafficData = await mockApi.getTraffic(selectedPeriod, selectedDateRange.startDate, selectedDateRange.endDate);
 
       // Fetch dashboard data
-      const dashboardResponse = await fetch('/api/analytics/dashboard');
-      const dashboardData = await dashboardResponse.json();
+      const dashboardData = await mockApi.getDashboard();
 
       // Fetch trends
-      const trendsResponse = await fetch(`/api/analytics/trends?period=${selectedPeriod}`);
-      const trendsData = await trendsResponse.json();
+      const trendsData = await mockApi.getAnalyticsTrends(selectedPeriod);
 
       // Fetch security insights
-      const securityResponse = await fetch('/api/analytics/security');
-      const securityData = await securityResponse.json();
+      const securityData = await mockApi.getSecurityInsights();
 
       // Fetch emergency data
-      const emergencyResponse = await fetch('/api/emergencies');
+      const emergencyData = await mockApi.getEmergencies();
       let emergencyStats = {
         active: 0,
         resolved: 0,
@@ -294,18 +296,15 @@ const Analytics = () => {
         visitor: 0
       };
 
-      if (emergencyResponse.ok) {
-        const emergencyData = await emergencyResponse.json();
-        if (emergencyData && emergencyData.emergencies) {
-          // Calculate stats
-          emergencyStats = {
-            active: emergencyData.emergencies.filter(e => e.status === 'Active').length,
-            resolved: emergencyData.emergencies.filter(e => e.status === 'Resolved').length,
-            cancelled: emergencyData.emergencies.filter(e => e.status === 'Cancelled').length,
-            departmental: emergencyData.emergencies.filter(e => e.type === 'Departmental').length,
-            visitor: emergencyData.emergencies.filter(e => e.type === 'Visitor').length
-          };
-        }
+      if (emergencyData && emergencyData.emergencies) {
+        // Calculate stats
+        emergencyStats = {
+          active: emergencyData.emergencies.filter(e => e.status === 'Active').length,
+          resolved: emergencyData.emergencies.filter(e => e.status === 'Resolved').length,
+          cancelled: emergencyData.emergencies.filter(e => e.status === 'Cancelled').length,
+          departmental: emergencyData.emergencies.filter(e => e.type === 'Departmental').length,
+          visitor: emergencyData.emergencies.filter(e => e.type === 'Visitor').length
+        };
       }
 
       setAnalyticsData({

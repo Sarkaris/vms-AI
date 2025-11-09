@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useI18n } from '../../contexts/I18nContext';
@@ -21,59 +21,93 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
 
   // Sidebar dynamic data
   const [quickStats, setQuickStats] = useState({ currentVisitors: 0, todayTotal: 0, activeEmergencies: 0 });
-  // eslint-disable-next-line no-unused-vars
-  const [_recentActivity, setRecentActivity] = useState([]);
-  // eslint-disable-next-line no-unused-vars
-  const [_loading, setLoading] = useState(false);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     const fetchSidebar = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/analytics/sidebar');
-        if (!res.ok) throw new Error('Failed to fetch sidebar');
-        const data = await res.json();
+        
+        // Try fetching from server directly first
+        let sidebarData = null;
+        try {
+          const response = await fetch('/api/analytics/sidebar');
+          if (response.ok) {
+            sidebarData = await response.json();
+            console.log('Sidebar data from server:', sidebarData);
+          }
+        } catch (error) {
+          console.log('Server not available, using mock data');
+        }
+        
+        // If server data not available, use mock
+        if (!sidebarData) {
+          const { mockApi } = await import('../utils/mockData');
+          sidebarData = await mockApi.getSidebar();
+        }
+        
         if (!isMounted) return;
+        
         // Fetch active emergencies count
         let activeEmergenciesCount = 0;
         try {
-          // console.log('Fetching emergencies for sidebar...');
-          const emergencyRes = await fetch('/api/emergencies');
-          // console.log('Emergency response status:', emergencyRes.status);
-          
-          if (emergencyRes.ok) {
-            const emergencyData = await emergencyRes.json();
-            // console.log('Emergency data received:', emergencyData);
-            
+          const emergencyResponse = await fetch('/api/emergencies');
+          if (emergencyResponse.ok) {
+            const emergencyData = await emergencyResponse.json();
             if (emergencyData && emergencyData.emergencies) {
-              // Count only active emergencies
               const activeEmergencies = emergencyData.emergencies.filter(e => e.status === 'Active');
-              // console.log('Active emergencies:', activeEmergencies);
               activeEmergenciesCount = activeEmergencies.length || 0;
-              // console.log('Active emergencies count:', activeEmergenciesCount);
-            } else {
-              console.warn('No emergencies data found in response');
             }
           } else {
-            console.error('Failed to fetch emergencies:', emergencyRes.statusText);
+            // Fallback to mock
+            const { mockApi } = await import('../utils/mockData');
+            const emergencyData = await mockApi.getEmergencies();
+            if (emergencyData && emergencyData.emergencies) {
+              const activeEmergencies = emergencyData.emergencies.filter(e => e.status === 'Active');
+              activeEmergenciesCount = activeEmergencies.length || 0;
+            }
           }
         } catch (error) {
           console.error('Error fetching emergencies:', error);
+          // Try mock as fallback
+          try {
+            const { mockApi } = await import('../utils/mockData');
+            const emergencyData = await mockApi.getEmergencies();
+            if (emergencyData && emergencyData.emergencies) {
+              const activeEmergencies = emergencyData.emergencies.filter(e => e.status === 'Active');
+              activeEmergenciesCount = activeEmergencies.length || 0;
+            }
+          } catch (e) {
+            console.error('Mock emergency fetch also failed:', e);
+          }
         }
         
+        // Set Quick Stats with proper values - handle both server and mock data structures
+        const currentVisitors = Number(sidebarData.currentVisitors || sidebarData.currentVisitorsCount || 0);
+        const todayTotal = Number(sidebarData.todayTotal || sidebarData.todayVisitors || sidebarData.todayVisitorsCount || 0);
+        
+        console.log('Setting Quick Stats:', { currentVisitors, todayTotal, activeEmergenciesCount });
+        
         setQuickStats({
-          currentVisitors: Number(data.currentVisitors || 0),
-          todayTotal: Number(data.todayTotal || 0),
+          currentVisitors: currentVisitors,
+          todayTotal: todayTotal,
           activeEmergencies: activeEmergenciesCount
         });
+        
         // Recent activity moved to Navbar notifications; keep but limit silently
-        const ra = Array.isArray(data.recentActivity) ? data.recentActivity.slice(0,0) : [];
+        const ra = Array.isArray(sidebarData.recentActivity) ? sidebarData.recentActivity.slice(0,0) : [];
         setRecentActivity(ra);
       } catch (e) {
-        // graceful fallback to static baselines
+        console.error('Error fetching sidebar data:', e);
+        // graceful fallback - keep previous values or set to 0
         if (!isMounted) return;
-        setQuickStats((prev) => prev);
+        setQuickStats(prev => ({
+          currentVisitors: prev.currentVisitors || 0,
+          todayTotal: prev.todayTotal || 0,
+          activeEmergencies: prev.activeEmergencies || 0
+        }));
       } finally {
         if (isMounted) setLoading(false);
       }

@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import io from 'socket.io-client';
+import React, { createContext, useContext, useState } from 'react';
 
 const SocketContext = createContext();
 
@@ -12,79 +11,24 @@ export const useSocket = () => {
 };
 
 export const SocketProvider = ({ children }) => {
-  const [socket, setSocket] = useState(null);
-  const [connected, setConnected] = useState(false);
-
-  useEffect(() => {
-    // Initialize socket connection - auto-detect server URL
-    const getSocketUrl = () => {
-      // Use environment variable if set (for production)
-      if (process.env.REACT_APP_SOCKET_URL) {
-        return process.env.REACT_APP_SOCKET_URL;
-      }
-      // In production, use same origin (server serves both API and static files)
-      if (process.env.NODE_ENV === 'production') {
-        return window.location.origin;
-      }
-      // Development fallback
-      return 'http://localhost:5000';
-    };
-
-    const newSocket = io(getSocketUrl(), {
-      transports: ['websocket', 'polling'],
-      upgrade: true,
-      rememberUpgrade: true,
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-      timeout: 20000
-    });
-
-    newSocket.on('connect', () => {
-      console.log('Connected to server');
-      setConnected(true);
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('Disconnected from server');
-      setConnected(false);
-    });
-
-    newSocket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
-      setConnected(false);
-    });
-
-    setSocket(newSocket);
-
-    // Cleanup on unmount
-    return () => {
-      newSocket.close();
-    };
-  }, []);
+  // In demo mode, socket is always "connected" but doesn't actually connect
+  const [connected] = useState(true);
+  const [socket] = useState(null);
 
   const joinRoom = (room) => {
-    if (socket) {
-      socket.emit('join-room', room);
-    }
+    // Demo mode - no actual socket connection
   };
 
   const leaveRoom = (room) => {
-    if (socket) {
-      socket.leave(room);
-    }
+    // Demo mode - no actual socket connection
   };
 
   const emitVisitorCheckin = (data) => {
-    if (socket) {
-      socket.emit('visitor-checkin', data);
-    }
+    // Demo mode - no actual socket emission
   };
 
   const emitVisitorCheckout = (data) => {
-    if (socket) {
-      socket.emit('visitor-checkout', data);
-    }
+    // Demo mode - no actual socket emission
   };
 
   const value = {

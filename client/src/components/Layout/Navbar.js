@@ -48,8 +48,7 @@ const Navbar = ({ onMobileMenuClick }) => {
   // Use local state for notifications to avoid Zustand infinite loop
   const [notifications, setNotifications] = useState([]);
   const [emergencyNotifications, setEmergencyNotifications] = useState([]);
-  // eslint-disable-next-line no-unused-vars
-  const [_visitorNotifications, setVisitorNotifications] = useState([]);
+  const [visitorNotifications, setVisitorNotifications] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   
   const [darkMode, setDarkMode] = useState(false);
@@ -73,50 +72,39 @@ const Navbar = ({ onMobileMenuClick }) => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        // console.log("Fetching notifications...");
+        const { mockApi } = await import('../utils/mockData');
         
         // Fetch active visitors for notifications
-        const visitorResponse = await fetch('/api/visitors/current/active');
-        if (!visitorResponse.ok) {
-          throw new Error(`Failed to fetch visitors: ${visitorResponse.status}`);
-        }
-        const visitorData = await visitorResponse.json();
-        // console.log("Visitor data:", visitorData);
+        const visitorData = await mockApi.getActiveVisitors();
         
         let newVisitorNotifications = [];
-        if (visitorData && Array.isArray(visitorData) && visitorData.length > 0) {
-          newVisitorNotifications = visitorData.map(visitor => ({
+        if (visitorData && visitorData.visitors && Array.isArray(visitorData.visitors) && visitorData.visitors.length > 0) {
+          newVisitorNotifications = visitorData.visitors.map(visitor => ({
             type: 'checkin',
             message: `${visitor.firstName || 'Visitor'} checked in`,
             at: visitor.checkInTime,
             visitorId: visitor._id
           }));
-          // console.log("Visitor notifications created:", newVisitorNotifications.length);
         }
         setVisitorNotifications(newVisitorNotifications);
         
         // Fetch today's check-ins for recent activities
-        const todayResponse = await fetch('/api/visitors?status=Checked In&limit=5');
-        if (todayResponse.ok) {
-          const todayData = await todayResponse.json();
-          if (todayData && todayData.visitors && todayData.visitors.length > 0) {
-            const todayActivities = todayData.visitors.map(visitor => ({
-              type: 'checkin',
-              message: `${visitor.firstName || 'Visitor'} checked in`,
-              at: visitor.checkInTime,
-              visitorId: visitor._id
-            }));
-            setRecentActivities(todayActivities);
-          }
+        const allVisitors = await mockApi.getVisitors();
+        if (allVisitors && allVisitors.visitors) {
+          const todayVisitors = allVisitors.visitors
+            .filter(v => v.status === 'Checked In')
+            .slice(0, 5);
+          const todayActivities = todayVisitors.map(visitor => ({
+            type: 'checkin',
+            message: `${visitor.firstName || 'Visitor'} checked in`,
+            at: visitor.checkInTime,
+            visitorId: visitor._id
+          }));
+          setRecentActivities(todayActivities);
         }
         
         // Fetch emergency notifications
-        const emergencyResponse = await fetch('/api/emergencies');
-        if (!emergencyResponse.ok) {
-          throw new Error(`Failed to fetch emergencies: ${emergencyResponse.status}`);
-        }
-        const emergencyData = await emergencyResponse.json();
-        // console.log("Emergency data:", emergencyData);
+        const emergencyData = await mockApi.getEmergencies();
         
         if (emergencyData && emergencyData.emergencies) {
           // Filter active emergencies
@@ -130,11 +118,9 @@ const Navbar = ({ onMobileMenuClick }) => {
               location: emergency.location || 'Unknown location',
               incidentCode: emergency.incidentCode || '',
               status: 'Active',
-              at: emergency.createdAt,
+              at: emergency.reportedAt || emergency.createdAt,
               priority: 'high'
             }));
-          
-          // console.log("Active emergencies:", activeEmergencies.length);
           
           // Set emergency notifications
           setEmergencyNotifications(activeEmergencies);
@@ -147,27 +133,16 @@ const Navbar = ({ onMobileMenuClick }) => {
               message: emergency.status === 'Active' 
                 ? `Emergency alert: ${emergency.type || 'Emergency'}`
                 : `Emergency update: ${emergency.status}`,
-              at: emergency.updatedAt || emergency.createdAt,
+              at: emergency.reportedAt || emergency.createdAt,
               priority: emergency.status === 'Active' ? 'high' : 'medium'
             }));
           
           // Combine visitor and emergency notifications
           const allNotifications = [...newVisitorNotifications, ...emergencyActivityNotifications];
-          // console.log("Setting all notifications:", allNotifications.length);
           setNotifications(allNotifications);
         }
       } catch (error) {
         console.error("Error fetching notifications:", error);
-        // Fallback to localStorage if API fails
-        try {
-          const savedVisitors = localStorage.getItem('visitorNotifications');
-          const savedEmergencies = localStorage.getItem('emergencyNotifications');
-          
-          if (savedVisitors) setNotifications(JSON.parse(savedVisitors));
-          if (savedEmergencies) setEmergencyNotifications(JSON.parse(savedEmergencies));
-        } catch (e) {
-          console.error("Error loading from localStorage:", e);
-        }
       }
     };
     

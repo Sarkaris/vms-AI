@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { showDemoToast } from './DemoPopup';
+import toast from 'react-hot-toast';
 
 const EmergencyModal = ({ onClose }) => {
   const [tab, setTab] = useState('visitor');
@@ -10,15 +12,38 @@ const EmergencyModal = ({ onClose }) => {
   const validDept = dept.departmentName.trim() && dept.pocName.trim() && /^\d{10}$/.test(dept.pocPhone.trim()) && Number(dept.headcount) > 0;
 
   const submit = async () => {
+    showDemoToast('emergency');
     try {
       setSubmitting(true);
+      const { mockApi } = await import('../utils/mockData');
       const payload = tab === 'visitor'
-        ? { type: 'Visitor', visitorFirstName: visitor.firstName.trim(), visitorLastName: visitor.lastName.trim(), visitorPhone: visitor.phone.trim() }
-        : { type: 'Departmental', departmentName: dept.departmentName.trim(), pocName: dept.pocName.trim(), pocPhone: dept.pocPhone.trim(), headcount: Number(dept.headcount) };
-      await fetch('/api/emergencies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        ? { 
+            type: 'Visitor', 
+            visitorFirstName: visitor.firstName.trim(),
+            visitorLastName: visitor.lastName.trim(),
+            visitorPhone: visitor.phone.trim(),
+            description: `Visitor emergency: ${visitor.firstName} ${visitor.lastName}`,
+            severity: 'High',
+            location: 'Main Lobby',
+            reportedBy: 'System'
+          }
+        : { 
+            type: 'Departmental', 
+            departmentName: dept.departmentName.trim(),
+            pocName: dept.pocName.trim(),
+            pocPhone: dept.pocPhone.trim(),
+            headcount: Number(dept.headcount) || 1,
+            description: `Departmental emergency: ${dept.departmentName}`,
+            severity: 'High',
+            location: dept.departmentName,
+            reportedBy: dept.pocName
+          };
+      await mockApi.createEmergency(payload);
+      toast.success('Emergency created successfully (Demo)');
       onClose();
     } catch (e) {
       console.error('Emergency submit failed', e);
+      toast.error('Failed to create emergency');
     } finally {
       setSubmitting(false);
     }
