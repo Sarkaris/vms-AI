@@ -18,6 +18,8 @@ import toast from 'react-hot-toast';
 // import { exportAnalyticsToExcel } from '../utils/exportUtils'; // Reserved for future use
 
 import {
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,

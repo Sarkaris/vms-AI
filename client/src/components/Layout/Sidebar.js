@@ -21,8 +21,8 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
 
   // Sidebar dynamic data
   const [quickStats, setQuickStats] = useState({ currentVisitors: 0, todayTotal: 0, activeEmergencies: 0 });
-  // const [recentActivity, setRecentActivity] = useState([]); // Reserved for future use
-  // const [loading, setLoading] = useState(false); // Reserved for future use
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
