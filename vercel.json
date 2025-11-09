@@ -4,7 +4,6 @@
   "outputDirectory": "client/build",
   "installCommand": "npm install",
   "framework": null,
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
   "rewrites": [
     {
       "source": "/api/(.*)",
