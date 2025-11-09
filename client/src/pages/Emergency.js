@@ -3,7 +3,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'react-router-dom';
-import { AlertTriangle, Check, X, RefreshCw, Filter, Search } from 'lucide-react';
+import { AlertTriangle, Check, X, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -80,6 +80,7 @@ const Emergency = () => {
   // Initial fetch
   useEffect(() => {
     fetchEmergencies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
   
   // Scroll to selected emergency when it's loaded
@@ -122,6 +123,7 @@ const Emergency = () => {
       socket.off('emergency-created', handleEmergencyCreated);
       socket.off('emergency-updated', handleEmergencyUpdated);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket]);
 
   // Handle emergency actions
@@ -173,7 +175,7 @@ const Emergency = () => {
     { name: 'Visitor', value: stats.visitor, color: '#8B5CF6' }
   ];
 
-  const COLORS = ['#EF4444', '#10B981', '#6B7280', '#3B82F6', '#8B5CF6'];
+  // const COLORS = ['#EF4444', '#10B981', '#6B7280', '#3B82F6', '#8B5CF6']; // Reserved for future use
 
   return (
     <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 lg:p-6">

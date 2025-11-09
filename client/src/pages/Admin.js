@@ -6,13 +6,7 @@ import toast from 'react-hot-toast';
 import { 
   Users, 
   Shield, 
-  Settings, 
   Plus, 
-  Edit, 
-  Trash2, 
-  Eye,
-  Lock,
-  Unlock,
   UserCheck,
   AlertTriangle
 } from 'lucide-react';
@@ -101,33 +95,34 @@ const fetchAdmins = async () => {
     }
   };
 
-  const handleEdit = (admin) => {
-    setEditingAdmin(admin);
-    setFormData({
-      username: admin.username,
-      email: admin.email,
-      password: '',
-      firstName: admin.firstName,
-      lastName: admin.lastName,
-      role: admin.role,
-      department: admin.department,
-      permissions: admin.permissions
-    });
-    setShowModal(true);
-  };
+  // Reserved for future use
+  // const handleEdit = (admin) => {
+  //   setEditingAdmin(admin);
+  //   setFormData({
+  //     username: admin.username,
+  //     email: admin.email,
+  //     password: '',
+  //     firstName: admin.firstName,
+  //     lastName: admin.lastName,
+  //     role: admin.role,
+  //     department: admin.department,
+  //     permissions: admin.permissions
+  //   });
+  //   setShowModal(true);
+  // };
 
-  const handleDelete = async (adminId) => {
-    if (window.confirm('Are you sure you want to deactivate this admin?')) {
-      try {
-        await axios.put(`/api/admin/${adminId}/deactivate`);
-        toast.success('Admin deactivated');
-        await fetchAdmins();
-      } catch (error) {
-        console.error('Error deactivating admin:', error);
-        toast.error(error.response?.data?.message || 'Failed to deactivate');
-      }
-    }
-  };
+  // const handleDelete = async (adminId) => {
+  //   if (window.confirm('Are you sure you want to deactivate this admin?')) {
+  //     try {
+  //       await axios.put(`/api/admin/${adminId}/deactivate`);
+  //       toast.success('Admin deactivated');
+  //       await fetchAdmins();
+  //     } catch (error) {
+  //       console.error('Error deactivating admin:', error);
+  //       toast.error(error.response?.data?.message || 'Failed to deactivate');
+  //     }
+  //   }
+  // };
 
   const resetForm = () => {
     setFormData({

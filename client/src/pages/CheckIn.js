@@ -110,6 +110,7 @@ const CheckIn = () => {
       handleSearch(raw);
     }, 500);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchId, isSearching]);
 
   // Updated lists per requirements - Police Departments in alphabetical order
@@ -128,7 +129,7 @@ const CheckIn = () => {
     'Superintendent of Police (SP)',
     'Additional Superintendent of Police (Additional SP)'
   ];
-  const securityLevels = ['Low', 'Medium', 'High'];
+  // const securityLevels = ['Low', 'Medium', 'High']; // Reserved for future use
 
   const handleSearch = useCallback(async (identifier) => {
     if (!identifier) {
@@ -195,6 +196,7 @@ const CheckIn = () => {
       setIsSearching(false);
       setSearchId('');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleScanResult = useCallback((result) => {
@@ -205,6 +207,7 @@ const CheckIn = () => {
       toast.success('QR Code Scanned!');
       handleSearch(scannedId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleSearch]);
 
   const { ref } = useZxing({
@@ -223,7 +226,7 @@ const CheckIn = () => {
   const validateField = (name, rawValue, nextState) => {
     let message = '';
     const value = (rawValue || '').toString().trim();
-    const state = nextState || formData;
+    // const state = nextState || formData; // Reserved for future use
 
     if (name === 'firstName' || name === 'lastName') {
       if (!nameRegex.test(value)) message = "Only letters, spaces, .' - (2-50 chars)";

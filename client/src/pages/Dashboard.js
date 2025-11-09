@@ -3,11 +3,8 @@ import { useSocket } from '../contexts/SocketContext';
 import {
   Users,
   UserPlus,
-  Clock,
   AlertTriangle,
-  TrendingUp,
   Calendar,
-  MapPin,
   Activity,
   Eye,
   EyeOff,
@@ -15,15 +12,11 @@ import {
   Download
 } from 'lucide-react';
 import { 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  BarChart as RechartsBarChart, 
-  Bar, 
   PieChart as RechartsPieChart, 
   Pie, 
   Cell,

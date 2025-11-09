@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useI18n } from '../../contexts/I18nContext';
@@ -21,8 +21,8 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
 
   // Sidebar dynamic data
   const [quickStats, setQuickStats] = useState({ currentVisitors: 0, todayTotal: 0, activeEmergencies: 0 });
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // const [recentActivity, setRecentActivity] = useState([]); // Reserved for future use
+  // const [loading, setLoading] = useState(false); // Reserved for future use
 
   useEffect(() => {
     let isMounted = true;
