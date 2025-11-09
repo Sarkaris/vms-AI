@@ -1,22 +1,13 @@
-// Database wrapper that works with SQLite, Turso (SQLite Cloud), and MySQL
+// Database wrapper with Turso (SQLite Cloud) support for Vercel
+const { createClient } = require('@libsql/client');
 const sqlite3 = require('sqlite3').verbose();
-const mysql = require('mysql2/promise');
-
-// Try to load Turso client (optional dependency)
-let createClient;
-try {
-  const libsql = require('@libsql/client');
-  createClient = libsql.createClient;
-} catch (e) {
-  // Turso not installed, will use SQLite
-}
 
 let db;
 let dbType;
 
 function initDB() {
-  // Check for Turso (SQLite Cloud) - Best for Vercel
-  if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN && createClient) {
+  // Check for Turso (SQLite Cloud)
+  if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN) {
     dbType = 'turso';
     db = createClient({
       url: process.env.TURSO_DATABASE_URL,
@@ -26,8 +17,8 @@ function initDB() {
     return db;
   }
   
-  // Check for local SQLite (demo mode or local development)
-  if (process.env.DEMO_DATABASE === 'sqlite' || !process.env.DB_HOST) {
+  // Check for local SQLite (demo mode)
+  if (process.env.DEMO_DATABASE === 'sqlite') {
     dbType = 'sqlite';
     const dbPath = process.env.SQLITE_DB_PATH || ':memory:';
     db = new sqlite3.Database(dbPath, (err) => {
@@ -35,16 +26,21 @@ function initDB() {
         console.error('❌ Error creating SQLite database:', err);
         throw err;
       }
-      console.log(`✅ SQLite database connected: ${dbPath === ':memory:' ? 'in-memory' : dbPath}`);
+      console.log(`✅ SQLite database connected: ${dbPath}`);
     });
     return db;
   }
   
-  // MySQL would be initialized here (for MySQL mode)
-  dbType = 'mysql';
-  // MySQL connection is handled separately in db.js
-  console.log('✅ MySQL mode (connection handled in db.js)');
-  return null;
+  // Fallback to in-memory SQLite
+  dbType = 'sqlite';
+  db = new sqlite3.Database(':memory:', (err) => {
+    if (err) {
+      console.error('❌ Error creating fallback database:', err);
+      throw err;
+    }
+    console.log('✅ Fallback SQLite database connected (in-memory)');
+  });
+  return db;
 }
 
 function getDB() {
@@ -56,7 +52,7 @@ function getDB() {
 
 // Wrapper functions for database operations
 async function query(sql, params = []) {
-  if (!db && dbType !== 'mysql') {
+  if (!db) {
     initDB();
   }
   
@@ -64,8 +60,7 @@ async function query(sql, params = []) {
     // Turso uses async/await
     try {
       const result = await db.execute(sql, params);
-      // Convert Turso rows to array format
-      return Array.isArray(result.rows) ? result.rows : [];
+      return result.rows;
     } catch (err) {
       throw err;
     }
@@ -74,17 +69,14 @@ async function query(sql, params = []) {
     return new Promise((resolve, reject) => {
       db.all(sql, params, (err, rows) => {
         if (err) reject(err);
-        else resolve(rows || []);
+        else resolve(rows);
       });
     });
-  } else {
-    // MySQL is handled in db.js
-    throw new Error('MySQL queries should use db.js pool directly');
   }
 }
 
 async function run(sql, params = []) {
-  if (!db && dbType !== 'mysql') {
+  if (!db) {
     initDB();
   }
   
@@ -93,7 +85,7 @@ async function run(sql, params = []) {
     try {
       const result = await db.execute(sql, params);
       return { 
-        lastID: result.lastInsertRowid?.toString() || result.lastInsertRowid || null, 
+        lastID: result.lastInsertRowid?.toString() || null, 
         changes: result.rowsAffected || 0 
       };
     } catch (err) {
@@ -107,9 +99,6 @@ async function run(sql, params = []) {
         else resolve({ lastID: this.lastID, changes: this.changes });
       });
     });
-  } else {
-    // MySQL is handled in db.js
-    throw new Error('MySQL queries should use db.js pool directly');
   }
 }
 
@@ -119,3 +108,4 @@ module.exports = {
   query,
   run
 };
+

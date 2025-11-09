@@ -16,11 +16,28 @@ export const SocketProvider = ({ children }) => {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection
-    const newSocket = io('http://localhost:5000', {
-      transports: ['websocket'],
+    // Initialize socket connection - auto-detect server URL
+    const getSocketUrl = () => {
+      // Use environment variable if set (for production)
+      if (process.env.REACT_APP_SOCKET_URL) {
+        return process.env.REACT_APP_SOCKET_URL;
+      }
+      // In production, use same origin (server serves both API and static files)
+      if (process.env.NODE_ENV === 'production') {
+        return window.location.origin;
+      }
+      // Development fallback
+      return 'http://localhost:5000';
+    };
+
+    const newSocket = io(getSocketUrl(), {
+      transports: ['websocket', 'polling'],
       upgrade: true,
-      rememberUpgrade: true
+      rememberUpgrade: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      timeout: 20000
     });
 
     newSocket.on('connect', () => {

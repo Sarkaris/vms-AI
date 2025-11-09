@@ -4,12 +4,12 @@
   "description": "Visitor Management System - Vercel Ready",
   "main": "server/index.js",
   "scripts": {
-    "build": "npm run build:client && npm run build:server",
+    "build": "cd client && npm install && npm run build",
     "build:client": "cd client && npm install && npm run build",
     "build:server": "cd server && npm install",
     "start": "cd server && npm start",
     "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm start\"",
-    "vercel-build": "npm run build:client && npm run build:server"
+    "vercel-build": "cd client && npm install && npm run build"
   },
   "keywords": [
     "visitor-management",

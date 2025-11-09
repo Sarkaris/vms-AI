@@ -13,9 +13,24 @@ const { initDemoDatabase } = require('./utils/demoDatabase');
 
 const app = express();
 const server = http.createServer(app);
+// CORS configuration - supports both development and production
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : (process.env.NODE_ENV === 'production' 
+      ? [process.env.FRONTEND_URL || 'http://localhost:3000']
+      : ["http://localhost:3000", "http://localhost:3001"]);
+
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
     allowedHeaders: ["*"]
@@ -34,7 +49,28 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false
 }));
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    const allowed = process.env.ALLOWED_ORIGINS 
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : (process.env.NODE_ENV === 'production' 
+          ? [process.env.FRONTEND_URL || process.env.DOMAIN || '*']
+          : ['http://localhost:3000', 'http://localhost:3001']);
+    
+    if (allowed.indexOf(origin) !== -1 || allowed.includes('*') || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

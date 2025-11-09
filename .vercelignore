@@ -1,0 +1,16 @@
+# Vercel ignore file
+node_modules
+.git
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+test database
+server/logs
+.vscode
+.idea
+*.md
+!README.md
+!VERCEL_DEPLOYMENT.md
+
