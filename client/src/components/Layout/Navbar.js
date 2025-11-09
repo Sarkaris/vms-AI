@@ -48,7 +48,8 @@ const Navbar = ({ onMobileMenuClick }) => {
   // Use local state for notifications to avoid Zustand infinite loop
   const [notifications, setNotifications] = useState([]);
   const [emergencyNotifications, setEmergencyNotifications] = useState([]);
-  const [visitorNotifications, setVisitorNotifications] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [_visitorNotifications, setVisitorNotifications] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   
   const [darkMode, setDarkMode] = useState(false);

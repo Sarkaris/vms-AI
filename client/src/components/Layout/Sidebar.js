@@ -21,8 +21,10 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
 
   // Sidebar dynamic data
   const [quickStats, setQuickStats] = useState({ currentVisitors: 0, todayTotal: 0, activeEmergencies: 0 });
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line no-unused-vars
+  const [_recentActivity, setRecentActivity] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [_loading, setLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
